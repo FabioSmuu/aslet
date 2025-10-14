@@ -6,7 +6,7 @@ use slab::Slab;
 use crate::{
     api::transaction::TransactionState,
     backup::BackupState,
-    error::Error,
+    error::{Error, InternalError},
     types::{Columns, Row, Rows},
     worker::messages::{InputMessage, OutputMessage},
 };
@@ -104,7 +104,7 @@ pub fn message_loop(input_receiver: Receiver<InputMessage>, output_sender: Sende
 fn get_conn(conn_pool: &Slab<Connection>, conn_id: usize) -> Result<&Connection, Error> {
     conn_pool
         .get(conn_id)
-        .ok_or_else(|| Error::from(format!("invalid connection id: {}", conn_id).as_str()))
+        .ok_or_else(|| InternalError::InvalidConnection(conn_id).into())
 }
 
 fn get_conn_mut(
@@ -113,7 +113,7 @@ fn get_conn_mut(
 ) -> Result<&mut Connection, Error> {
     conn_pool
         .get_mut(conn_id)
-        .ok_or_else(|| Error::from(format!("invalid connection id: {}", conn_id).as_str()))
+        .ok_or_else(|| InternalError::InvalidConnection(conn_id).into())
 }
 
 fn open(conn_pool: &mut Slab<Connection>, path: String) -> Result<(usize, String), Error> {
@@ -194,7 +194,7 @@ fn rollback(
     state: TransactionState,
 ) -> Result<(), Error> {
     if !state.is_active() {
-        return Err("transaction is not active".into());
+        return Err(InternalError::InvalidTransaction.into());
     }
 
     let conn = get_conn(conn_pool, conn_id)?;
@@ -210,7 +210,7 @@ fn commit(
     state: TransactionState,
 ) -> Result<(), Error> {
     if !state.is_active() {
-        return Err("transaction is not active".into());
+        return Err(InternalError::InvalidTransaction.into());
     }
 
     let conn = get_conn(conn_pool, conn_id)?;

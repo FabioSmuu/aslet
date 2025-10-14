@@ -1,5 +1,5 @@
+use crate::error::Error;
 use godot::prelude::*;
-use std::error::Error;
 
 #[macro_export]
 macro_rules! ok {
@@ -19,19 +19,24 @@ macro_rules! failed {
         array.push(&$err.to_string().to_variant());
         array
     }};
+    ($($value:expr),* $(,)?) => {{
+        let mut array = VariantArray::new();
+        array.push(&godot::global::Error::FAILED.to_variant());
+        $(array.push(&$value.to_variant());)*
+        array
+    }};
 }
 
-pub fn variant_from_result<V, E>(res: Result<V, E>) -> VariantArray
+pub fn variant_from_result<V>(res: Result<V, Error>) -> VariantArray
 where
     V: ToGodot,
-    E: Error,
 {
     match res {
         Ok(value) => {
             ok!(value)
         }
         Err(err) => {
-            failed!(err)
+            failed!(i64::from(&err), err.to_string())
         }
     }
 }

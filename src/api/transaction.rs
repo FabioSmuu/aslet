@@ -84,7 +84,7 @@ impl AsletTransaction {
     /// Returns an [`AsletTask`] that yields **once**, producing a [`VariantArray`] with one of the following forms:
     ///
     /// * `[OK, n]` — statement executed successfully, where `n` is the number of affected rows.
-    /// * `[FAILED, errmsg]` — execution failed, with `errmsg` containing the error message.
+    /// * `[FAILED, code, errmsg]` — execution failed. `code` is an `int` representing the error type, and `errmsg` is a `String` containing a human-readable error message.
     ///
     /// # Example
     /// ```gdscript
@@ -122,7 +122,7 @@ impl AsletTransaction {
     ///
     /// * `[OK, rows]` — query executed successfully, with `rows` as an `Array[Array[Variant]]`
     ///   where each inner array represents a row.
-    /// * `[FAILED, errmsg]` — query failed, with `errmsg` containing the error message.
+    /// * `[FAILED, code, errmsg]` — query failed. `code` is an `int` representing the error type, and `errmsg` is a `String` containing a human-readable error message.
     ///
     /// # Example
     /// ```gdscript
@@ -154,7 +154,7 @@ impl AsletTransaction {
     /// Returns an [`AsletTask`] that yields **once**, producing a [`VariantArray`] with one of the following forms:
     ///
     /// * `[OK]` — commit done successfully.
-    /// * `[FAILED, errmsg]` — commit failed, with `errmsg` containing the error message.
+    /// * `[FAILED, code, errmsg]` — commit failed. `code` is an `int` representing the error type, and `errmsg` is a `String` containing a human-readable error message.
     ///
     /// # Example
     /// ```gdscript
@@ -185,7 +185,7 @@ impl AsletTransaction {
     /// Returns an [`AsletTask`] that yields **once**, producing a [`VariantArray`] with one of the following forms:
     ///
     /// * `[OK]` — transaction rolled back successfully.
-    /// * `[FAILED, errmsg]` — rollback failed, with `errmsg` containing the error message.
+    /// * `[FAILED, code, errmsg]` — rollback failed. `code` is an `int` representing the error type, and `errmsg` is a `String` containing a human-readable error message.
     ///
     /// # Example
     /// ```gdscript

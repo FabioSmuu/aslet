@@ -48,7 +48,7 @@ impl AsletConn {
     /// Returns an [`AsletTask`] that yields **once**, producing a [`VariantArray`] with one of the following forms:
     ///
     /// * `[OK, transaction]` — transaction successfully started.
-    /// * `[FAILED, errmsg]` — failed to start transaction, with `errmsg` containing the error message.
+    /// * `[FAILED, code, errmsg]` — failed to start transaction. `code` is an `int` representing the error type, and `errmsg` is a `String` containing a human-readable error message.
     ///
     /// # Example
     /// ```gdscript
@@ -85,7 +85,7 @@ impl AsletConn {
     /// Returns an [`AsletTask`] that yields **once**, producing a [`VariantArray`] with one of the following forms:
     ///
     /// * `[OK]` — batch insert done successfully.
-    /// * `[FAILED, errmsg]` — insert failed, with `errmsg` containing the error message.
+    /// * `[FAILED, code, errmsg]` — insert failed. `code` is an `int` representing the error type, and `errmsg` is a `String` containing a human-readable error message.
     ///
     /// # Example
     /// ```gdscript
@@ -123,7 +123,7 @@ impl AsletConn {
     /// Returns an [`AsletTask`] that yields **once**, producing a [`VariantArray`] with one of the following forms:
     ///
     /// * `[OK, n]` — statement executed successfully, where `n` is the number of affected rows.
-    /// * `[FAILED, errmsg]` — execution failed, with `errmsg` containing the error message.
+    /// * `[FAILED, code, errmsg]` — execution failed. `code` is an `int` representing the error type, and `errmsg` is a `String` containing a human-readable error message.
     ///
     /// # Example
     /// ```gdscript
@@ -161,7 +161,7 @@ impl AsletConn {
     ///
     /// * `[OK, rows]` — query executed successfully, with `rows` as an `Array[Array[Variant]]`
     ///   where each inner array represents a row.
-    /// * `[FAILED, errmsg]` — query failed, with `errmsg` containing the error message.
+    /// * `[FAILED, code, errmsg]` — query failed. `code` is an `int` representing the error type, and `errmsg` is a `String` containing a human-readable error message.
     ///
     /// # Example
     /// ```gdscript
@@ -206,7 +206,7 @@ impl AsletConn {
     /// The task yields **once**, returning a [`VariantArray`] with one of the following forms:
     ///
     /// * `[OK]` — backup done successfully.
-    /// * `[FAILED, errmsg]` — backup failed, with `errmsg` containing the error message.
+    /// * `[FAILED, code, errmsg]` — backup failed. `code` is an `int` representing the error type, and `errmsg` is a `String` containing a human-readable error message.
     #[func]
     fn backup(&self, dst: GString, step: i32, progress: Callable) -> Option<Gd<AsletTask>> {
         let (task_ctx, task) = super::task::create(&self.tasks);

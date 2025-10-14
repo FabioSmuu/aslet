@@ -57,7 +57,7 @@ impl Aslet {
     /// The task yields **once**, returning a [`VariantArray`] with one of the following forms:
     ///
     /// * `[OK, db]` — database opened successfully, `db` is the [`AsletConn`] instance.
-    /// * `[FAILED, errmsg]` — failed to open the database, with `errmsg` containing the error message.
+    /// * `[FAILED, code, errmsg]` — failed to open the database. `code` is an `int` representing the error type, and `errmsg` is a `String` containing a human-readable error message.
     ///
     /// # Parameters
     ///
