@@ -23,3 +23,28 @@ jobs:
 
       - name: Build
         run: cargo build --release --verbose
+
+      - name: List target/release directory (for debugging)
+        run: ls -l target/release/
+        shell: bash # Garante que 'ls' funcione em Windows também
+
+      - name: Upload Linux Binaries
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: aslet-linux
+          path: target/release/libaslet.so
+
+      - name: Upload Windows Binaries
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: aslet-windows
+          path: target/release/aslet.dll
+
+      - name: Upload macOS Binaries
+        if: matrix.os == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: aslet-macos
+          path: target/release/libaslet.dylib
