@@ -37,7 +37,7 @@ impl Tasks {
 }
 
 #[derive(Debug, Clone)]
-pub struct TaskContext(Arc<(usize, AtomicU8)>);
+pub struct TaskContext(usize, Arc<AtomicU8>);
 
 impl TaskContext {
     const WAITING: u8 = 0;
@@ -45,25 +45,24 @@ impl TaskContext {
     const DONE: u8 = 2;
 
     pub fn new(id: usize) -> Self {
-        Self(Arc::new((id, AtomicU8::new(Self::WAITING))))
+        Self(id, Arc::new(AtomicU8::new(Self::WAITING)))
     }
 
     pub fn cancel(&self) -> bool {
-        self.0
-            .1
+        self.1
             .compare_exchange(Self::WAITING, Self::CANCELED, SeqCst, SeqCst)
             .is_ok()
     }
 
     pub fn id(&self) -> usize {
-        self.0.0
+        self.0
     }
 
     pub fn is_canceled(&self) -> bool {
-        self.0.1.load(SeqCst) == Self::CANCELED
+        self.1.load(SeqCst) == Self::CANCELED
     }
 
     pub fn done(&self) {
-        self.0.1.store(Self::DONE, SeqCst);
+        self.1.store(Self::DONE, SeqCst);
     }
 }
