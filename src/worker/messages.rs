@@ -1,7 +1,8 @@
 use crate::{
-    api::{task::TaskContext, transaction::TransactionState},
+    api::transaction::TransactionState,
     backup::{BackupRequest, BackupState},
     error::Error,
+    tasks::TaskContext,
     types::{Columns, Row, Rows},
 };
 

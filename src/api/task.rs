@@ -1,20 +1,6 @@
-use std::sync::{
-    Arc,
-    atomic::{AtomicU8, Ordering::SeqCst},
-};
-
 use godot::prelude::*;
-use sharded_slab::Slab;
 
-pub fn create(slab: &Slab<Gd<AsletTask>>) -> (TaskContext, Gd<AsletTask>) {
-    let entry = slab.vacant_entry().unwrap();
-    let id = entry.key();
-    let task_ctx = TaskContext::new(id);
-    let task = AsletTask::new(task_ctx.clone());
-
-    entry.insert(task.clone());
-    (task_ctx, task)
-}
+use crate::tasks::TaskContext;
 
 /// Represents an asynchronous operation in progress.
 ///
@@ -52,37 +38,5 @@ impl AsletTask {
         } else {
             godot::global::Error::FAILED
         }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct TaskContext(Arc<(usize, AtomicU8)>);
-
-impl TaskContext {
-    const WAITING: u8 = 0;
-    const CANCELED: u8 = 1;
-    const DONE: u8 = 2;
-
-    pub fn new(id: usize) -> Self {
-        Self(Arc::new((id, AtomicU8::new(Self::WAITING))))
-    }
-
-    fn cancel(&self) -> bool {
-        self.0
-            .1
-            .compare_exchange(Self::WAITING, Self::CANCELED, SeqCst, SeqCst)
-            .is_ok()
-    }
-
-    pub fn id(&self) -> usize {
-        self.0.0
-    }
-
-    pub fn is_canceled(&self) -> bool {
-        self.0.1.load(SeqCst) == Self::CANCELED
-    }
-
-    pub fn done(&self) {
-        self.0.1.store(Self::DONE, SeqCst);
     }
 }

@@ -1,21 +1,14 @@
-use std::{
-    sync::Arc,
-    time::{Duration, Instant},
-};
+use std::time::{Duration, Instant};
 
 use crossbeam::channel::{Receiver, RecvTimeoutError};
 use godot::{global::printerr, prelude::*};
-use sharded_slab::Slab;
 
 use crate::{
-    api::{
-        conn::AsletConn,
-        task::{AsletTask, TaskContext},
-        transaction::AsletTransaction,
-    },
+    api::{conn::AsletConn, task::AsletTask, transaction::AsletTransaction},
     error::{Error, InternalError},
     failed, ok,
     result::variant_from_result,
+    tasks::{TaskContext, Tasks},
     worker::{
         Worker,
         messages::{InputMessage, OutputMessage},
@@ -29,7 +22,7 @@ use crate::{
 #[derive(GodotClass)]
 #[class(base=RefCounted)]
 pub struct Aslet {
-    tasks: Arc<Slab<Gd<AsletTask>>>,
+    tasks: Tasks,
     base: Base<RefCounted>,
     worker: Worker,
     output_receiver: Receiver<OutputMessage>,
@@ -38,7 +31,7 @@ pub struct Aslet {
 #[godot_api]
 impl IRefCounted for Aslet {
     fn init(base: Base<RefCounted>) -> Self {
-        let tasks = Arc::new(Slab::new());
+        let tasks = Tasks::new();
         let (worker, output_receiver) = Worker::new();
 
         Self {
@@ -65,7 +58,7 @@ impl Aslet {
     /// * `path` — Path to the database file to open.
     #[func]
     fn open(&self, path: String) -> Gd<AsletTask> {
-        let (task_ctx, task) = super::task::create(&self.tasks);
+        let (task_ctx, task) = self.tasks.create();
         self.worker
             .send(InputMessage::Open(task_ctx, path.to_string()));
         task
@@ -155,7 +148,9 @@ impl Aslet {
     #[inline]
     fn complete_task(&self, task_ctx: TaskContext, result: Array<Variant>) {
         let task_id = task_ctx.id();
-        if let Some(mut task) = self.tasks.take(task_id) {
+        let task = self.tasks.take(task_id);
+
+        if let Some(mut task) = task {
             task.emit_signal("done", &[result.to_variant()]);
         } else {
             printerr(&[format!("invalid task {}", task_id).to_variant()]);

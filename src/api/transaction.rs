@@ -7,10 +7,10 @@ use std::sync::{
 };
 
 use godot::prelude::*;
-use sharded_slab::Slab;
 
 use crate::{
     api::task::AsletTask,
+    tasks::Tasks,
     worker::{Worker, messages::InputMessage},
 };
 
@@ -54,13 +54,13 @@ pub struct AsletTransaction {
     conn_id: usize,
     worker: Worker,
     state: TransactionState,
-    tasks: Arc<Slab<Gd<AsletTask>>>,
+    tasks: Tasks,
 }
 
 #[godot_api]
 impl AsletTransaction {
     /// Creates a new [`AsletTransaction`].
-    pub fn new(conn_id: usize, worker: Worker, tasks: Arc<Slab<Gd<AsletTask>>>) -> Gd<Self> {
+    pub fn new(conn_id: usize, worker: Worker, tasks: Tasks) -> Gd<Self> {
         Gd::from_object(Self {
             conn_id,
             worker,
@@ -96,7 +96,7 @@ impl AsletTransaction {
     /// ```
     #[func]
     fn exec(&self, sql: GString, params: Array<Variant>) -> Gd<AsletTask> {
-        let (task_ctx, task) = super::task::create(&self.tasks);
+        let (task_ctx, task) = self.tasks.create();
         self.worker.send(InputMessage::Exec(
             self.conn_id,
             task_ctx,
@@ -134,7 +134,7 @@ impl AsletTransaction {
     /// ```
     #[func]
     fn fetch(&self, sql: GString, params: Array<Variant>) -> Gd<AsletTask> {
-        let (task_ctx, task) = super::task::create(&self.tasks);
+        let (task_ctx, task) = self.tasks.create();
         self.worker.send(InputMessage::Fetch(
             self.conn_id,
             task_ctx,
@@ -166,7 +166,7 @@ impl AsletTransaction {
     /// ```
     #[func]
     fn commit(&self) -> Gd<AsletTask> {
-        let (task_ctx, task) = super::task::create(&self.tasks);
+        let (task_ctx, task) = self.tasks.create();
         self.worker.send(InputMessage::Commit(
             task_ctx,
             self.conn_id,
@@ -195,7 +195,7 @@ impl AsletTransaction {
     /// ```
     #[func]
     fn rollback(&self) -> Gd<AsletTask> {
-        let (task_ctx, task) = super::task::create(&self.tasks);
+        let (task_ctx, task) = self.tasks.create();
         self.worker.send(InputMessage::Rollback(
             task_ctx,
             self.conn_id,

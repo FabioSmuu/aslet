@@ -2,6 +2,7 @@ mod api;
 mod backup;
 mod error;
 mod result;
+mod tasks;
 mod types;
 mod worker;
 
