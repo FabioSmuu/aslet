@@ -1,6 +1,3 @@
-use crate::error::Error;
-use godot::prelude::*;
-
 #[macro_export]
 macro_rules! ok {
     ($($value:expr),* $(,)?) => {{
@@ -20,18 +17,4 @@ macro_rules! failed {
         array.push(&($err.to_string()).to_variant());
         array
     }};
-}
-
-pub fn variant_from_result<V>(res: Result<V, Error>) -> VariantArray
-where
-    V: ToGodot,
-{
-    match res {
-        Ok(value) => {
-            ok!(value)
-        }
-        Err(err) => {
-            failed!(err)
-        }
-    }
 }

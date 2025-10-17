@@ -7,7 +7,6 @@ use crate::{
     api::{conn::AsletConn, task::AsletTask, transaction::AsletTransaction},
     error::{Error, InternalError},
     failed, ok,
-    result::variant_from_result,
     tasks::{TaskContext, Tasks},
     worker::{
         Worker,
@@ -101,7 +100,7 @@ impl Aslet {
                 Err(err) => self.complete_task(task_ctx, failed!(err)),
             },
             OutputMessage::Exec(task_ctx, result) => {
-                self.complete_task(task_ctx, variant_from_result(result));
+                self.complete_task(task_ctx, result.map_or_else(|e| failed!(e), |v| ok!(v)));
             }
             OutputMessage::Fetch(task_ctx, result) => match result {
                 Ok((rows, columns)) => {
@@ -121,7 +120,7 @@ impl Aslet {
             },
             OutputMessage::TransactionRolledBack(task_ctx, result)
             | OutputMessage::TransactionCommitted(task_ctx, result) => {
-                self.complete_task(task_ctx, variant_from_result(result));
+                self.complete_task(task_ctx, result.map_or_else(|e| failed!(e), |v| ok!(v)));
             }
             OutputMessage::Backup(task_ctx, result) => match result {
                 Ok(backup_state) => {
