@@ -76,15 +76,16 @@ impl Aslet {
         let deadline = Instant::now() + Duration::from_millis(timeout_ms);
         loop {
             let now = Instant::now();
-            if now >= deadline {
-                break;
-            }
+            let remaining = deadline.saturating_duration_since(now);
 
-            let remaining = deadline - now;
             match self.output_receiver.recv_timeout(remaining) {
                 Ok(msg) => self.handle_msg(msg),
                 Err(RecvTimeoutError::Timeout) => break,
                 Err(RecvTimeoutError::Disconnected) => return,
+            }
+
+            if now >= deadline {
+                break;
             }
         }
     }
