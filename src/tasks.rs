@@ -9,7 +9,7 @@ use std::{
     },
 };
 
-use crate::api::task::AsletTask;
+use crate::api::{aslet::Aslet, task::AsletTask};
 
 #[derive(Debug, Clone)]
 pub struct Tasks(Rc<RefCell<Slab<Gd<AsletTask>>>>);
@@ -19,12 +19,12 @@ impl Tasks {
         Self(Rc::new(RefCell::new(Slab::new())))
     }
 
-    pub fn create(&self) -> (TaskContext, Gd<AsletTask>) {
+    pub fn create(&self, aslet: Gd<Aslet>) -> (TaskContext, Gd<AsletTask>) {
         let tasks = &mut *self.0.borrow_mut();
         let entry = tasks.vacant_entry();
         let id = entry.key();
         let task_ctx = TaskContext::new(id);
-        let task = AsletTask::new(task_ctx.clone());
+        let task = AsletTask::new(aslet, task_ctx.clone());
 
         entry.insert(task.clone());
         (task_ctx, task)

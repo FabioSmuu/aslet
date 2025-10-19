@@ -57,7 +57,7 @@ impl Aslet {
     /// * `path` — Path to the database file to open.
     #[func]
     fn open(&self, path: String) -> Gd<AsletTask> {
-        let (task_ctx, task) = self.tasks.create();
+        let (task_ctx, task) = self.tasks.create(self.to_gd());
         self.worker
             .send(InputMessage::Open(task_ctx, path.to_string()));
         task
@@ -72,7 +72,7 @@ impl Aslet {
     ///
     /// * `timeout_ms` — Maximum time in milliseconds to wait for task completion.
     #[func]
-    fn poll(&self, timeout_ms: u64) {
+    pub fn poll(&self, timeout_ms: u64) {
         let deadline = Instant::now() + Duration::from_millis(timeout_ms);
         loop {
             let now = Instant::now();
@@ -94,8 +94,13 @@ impl Aslet {
         match msg {
             OutputMessage::Open(task_ctx, result) => match result {
                 Ok((conn, path)) => {
-                    let aslet_conn =
-                        AsletConn::new(conn, path, self.worker.clone(), self.tasks.clone());
+                    let aslet_conn = AsletConn::new(
+                        self.to_gd(),
+                        conn,
+                        path,
+                        self.worker.clone(),
+                        self.tasks.clone(),
+                    );
                     self.complete_task(task_ctx, ok!(aslet_conn));
                 }
                 Err(err) => self.complete_task(task_ctx, failed!(err)),
@@ -113,8 +118,12 @@ impl Aslet {
             },
             OutputMessage::TransactionStarted(task_ctx, result) => match result {
                 Ok(conn) => {
-                    let transaction =
-                        AsletTransaction::new(conn, self.worker.clone(), self.tasks.clone());
+                    let transaction = AsletTransaction::new(
+                        self.to_gd(),
+                        conn,
+                        self.worker.clone(),
+                        self.tasks.clone(),
+                    );
                     self.complete_task(task_ctx, ok!(transaction));
                 }
                 Err(err) => self.complete_task(task_ctx, failed!(err)),

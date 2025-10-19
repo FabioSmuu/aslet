@@ -1,7 +1,7 @@
 use godot::prelude::*;
 
 use crate::{
-    api::task::AsletTask,
+    api::{aslet::Aslet, task::AsletTask},
     backup::BackupRequest,
     tasks::Tasks,
     worker::{Worker, messages::InputMessage},
@@ -11,6 +11,7 @@ use crate::{
 #[derive(GodotClass)]
 #[class(no_init, base=RefCounted)]
 pub struct AsletConn {
+    aslet: Gd<Aslet>,
     conn_id: usize,
     path: String,
     worker: Worker,
@@ -19,8 +20,15 @@ pub struct AsletConn {
 
 #[godot_api]
 impl AsletConn {
-    pub fn new(conn_id: usize, path: String, worker: Worker, tasks: Tasks) -> Gd<Self> {
+    pub fn new(
+        aslet: Gd<Aslet>,
+        conn_id: usize,
+        path: String,
+        worker: Worker,
+        tasks: Tasks,
+    ) -> Gd<Self> {
         Gd::from_object(Self {
+            aslet,
             conn_id,
             path,
             worker,
@@ -55,7 +63,7 @@ impl AsletConn {
     /// ```
     #[func]
     fn transaction(&self) -> Gd<AsletTask> {
-        let (task_ctx, task) = self.tasks.create();
+        let (task_ctx, task) = self.tasks.create(self.aslet.clone());
         self.worker.send(InputMessage::BeginTransaction(
             task_ctx,
             self.path.to_string(),
@@ -91,7 +99,7 @@ impl AsletConn {
     /// ```
     #[func]
     fn batch_insert(&self, sql: GString, rows: Array<Array<Variant>>) -> Gd<AsletTask> {
-        let (task_ctx, task) = self.tasks.create();
+        let (task_ctx, task) = self.tasks.create(self.aslet.clone());
         self.worker.send(InputMessage::BatchInsert(
             self.conn_id,
             task_ctx,
@@ -128,7 +136,7 @@ impl AsletConn {
     /// ```
     #[func]
     fn exec(&self, sql: GString, params: Array<Variant>) -> Gd<AsletTask> {
-        let (task_ctx, task) = self.tasks.create();
+        let (task_ctx, task) = self.tasks.create(self.aslet.clone());
         self.worker.send(InputMessage::Exec(
             self.conn_id,
             task_ctx,
@@ -166,7 +174,7 @@ impl AsletConn {
     /// ```
     #[func]
     fn fetch(&self, sql: GString, params: Array<Variant>) -> Gd<AsletTask> {
-        let (task_ctx, task) = self.tasks.create();
+        let (task_ctx, task) = self.tasks.create(self.aslet.clone());
         self.worker.send(InputMessage::Fetch(
             self.conn_id,
             task_ctx,
@@ -202,7 +210,7 @@ impl AsletConn {
     /// * `[FAILED, code, errmsg]` — backup failed. `code` is an `int` representing the error type, and `errmsg` is a `String` containing a human-readable error message.
     #[func]
     fn backup(&self, dst: GString, step: i32, progress: Callable) -> Option<Gd<AsletTask>> {
-        let (task_ctx, task) = self.tasks.create();
+        let (task_ctx, task) = self.tasks.create(self.aslet.clone());
         self.worker.send(InputMessage::BeginBackup(
             task_ctx,
             BackupRequest {

@@ -8,6 +8,7 @@ pub enum InternalError {
     InvalidConnection(usize),
     InvalidTransaction,
     TaskCanceled,
+    Unreachable,
 }
 
 impl From<&InternalError> for i64 {
@@ -17,6 +18,7 @@ impl From<&InternalError> for i64 {
                 InternalError::InvalidConnection(_) => 1,
                 InternalError::InvalidTransaction => 2,
                 InternalError::TaskCanceled => 3,
+                InternalError::Unreachable => 4,
             }
     }
 }
@@ -29,6 +31,7 @@ impl Display for InternalError {
             }
             InternalError::InvalidTransaction => write!(f, "invalid transaction"),
             InternalError::TaskCanceled => write!(f, "task canceled"),
+            InternalError::Unreachable => write!(f, "unreachable"),
         }
     }
 }

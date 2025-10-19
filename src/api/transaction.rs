@@ -9,7 +9,7 @@ use std::sync::{
 use godot::prelude::*;
 
 use crate::{
-    api::task::AsletTask,
+    api::{aslet::Aslet, task::AsletTask},
     tasks::Tasks,
     worker::{Worker, messages::InputMessage},
 };
@@ -51,6 +51,7 @@ impl TransactionState {
 #[derive(GodotClass)]
 #[class(no_init, base=RefCounted)]
 pub struct AsletTransaction {
+    aslet: Gd<Aslet>,
     conn_id: usize,
     worker: Worker,
     state: TransactionState,
@@ -60,8 +61,9 @@ pub struct AsletTransaction {
 #[godot_api]
 impl AsletTransaction {
     /// Creates a new [`AsletTransaction`].
-    pub fn new(conn_id: usize, worker: Worker, tasks: Tasks) -> Gd<Self> {
+    pub fn new(aslet: Gd<Aslet>, conn_id: usize, worker: Worker, tasks: Tasks) -> Gd<Self> {
         Gd::from_object(Self {
+            aslet,
             conn_id,
             worker,
             tasks,
@@ -96,7 +98,7 @@ impl AsletTransaction {
     /// ```
     #[func]
     fn exec(&self, sql: GString, params: Array<Variant>) -> Gd<AsletTask> {
-        let (task_ctx, task) = self.tasks.create();
+        let (task_ctx, task) = self.tasks.create(self.aslet.clone());
         self.worker.send(InputMessage::Exec(
             self.conn_id,
             task_ctx,
@@ -134,7 +136,7 @@ impl AsletTransaction {
     /// ```
     #[func]
     fn fetch(&self, sql: GString, params: Array<Variant>) -> Gd<AsletTask> {
-        let (task_ctx, task) = self.tasks.create();
+        let (task_ctx, task) = self.tasks.create(self.aslet.clone());
         self.worker.send(InputMessage::Fetch(
             self.conn_id,
             task_ctx,
@@ -166,7 +168,7 @@ impl AsletTransaction {
     /// ```
     #[func]
     fn commit(&self) -> Gd<AsletTask> {
-        let (task_ctx, task) = self.tasks.create();
+        let (task_ctx, task) = self.tasks.create(self.aslet.clone());
         self.worker.send(InputMessage::Commit(
             task_ctx,
             self.conn_id,
@@ -195,7 +197,7 @@ impl AsletTransaction {
     /// ```
     #[func]
     fn rollback(&self) -> Gd<AsletTask> {
-        let (task_ctx, task) = self.tasks.create();
+        let (task_ctx, task) = self.tasks.create(self.aslet.clone());
         self.worker.send(InputMessage::Rollback(
             task_ctx,
             self.conn_id,
